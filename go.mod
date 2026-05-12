@@ -93,7 +93,7 @@ require (
 	github.com/kofalt/go-memoize v0.0.0-20240506050413-9e5eb99a0f2a
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/rm-hull/godx v0.2.1
+	github.com/rm-hull/godx v0.2.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.10.2
 	github.com/tavsec/gin-healthcheck v1.7.15
