@@ -103,10 +103,7 @@ func NewFuelPricesClient(clientId, clientSecret string, refresh string) (FuelPri
 }
 
 func (mgr *fuelPricesManager) ShouldRefresh() bool {
-	if mgr.refresh == "never" {
-		return false
-	}
-	return true
+	return mgr.refresh != "never"
 }
 
 func (mgr *fuelPricesManager) LastUpdated() *time.Time {
