@@ -19,9 +19,9 @@ import (
 	hc_config "github.com/tavsec/gin-healthcheck/config"
 )
 
-func ApiServer(dbPath string, port int, fullRefresh, debug bool) error {
+func ApiServer(dbPath string, port int, refresh string, debug bool) error {
 
-	client, repo, err := bootstrap(dbPath, fullRefresh, debug)
+	client, repo, err := bootstrap(dbPath, refresh, debug)
 	if err != nil {
 		return err
 	}
