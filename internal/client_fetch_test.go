@@ -41,8 +41,8 @@ func setupTestClient(t *testing.T, baseUrl string) *fuelPricesManager {
 		timeTracker: timeTracker{
 			started: time.Now(),
 		},
-		fullRefresh: false,
-		client:      &http.Client{},
+		refresh: "incremental",
+		client:  &http.Client{},
 		authReq: models.AuthRequest{
 			ClientId:     "test-client-id",
 			ClientSecret: "test-client-secret",
@@ -275,17 +275,17 @@ func TestGetFillingStations_Success(t *testing.T) {
 }
 
 func TestGetEffectiveStartTimestamp(t *testing.T) {
-	mgr := &fuelPricesManager{fullRefresh: false}
+	mgr := &fuelPricesManager{refresh: "incremental"}
 	lastFetch := time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)
 
 	ts := mgr.getEffectiveStartTimestamp("path", &lastFetch)
 	assert.Equal(t, "2023-01-01 12:00:00", ts)
 
-	mgr.fullRefresh = true
+	mgr.refresh = "full"
 	ts = mgr.getEffectiveStartTimestamp("path", &lastFetch)
 	assert.Equal(t, "", ts)
 
-	mgr.fullRefresh = false
+	mgr.refresh = "incremental"
 	ts = mgr.getEffectiveStartTimestamp("path", nil)
 	assert.Equal(t, "", ts)
 }
@@ -374,7 +374,7 @@ func TestNewFuelPricesClient(t *testing.T) {
 
 	t.Setenv("FUEL_PRICES_API_BASE_URL", server.URL)
 
-	client, err := NewFuelPricesClient("id", "secret", false)
+	client, err := NewFuelPricesClient("id", "secret", "incremental")
 	require.NoError(t, err)
 	assert.NotNil(t, client)
 }

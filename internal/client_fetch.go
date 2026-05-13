@@ -51,6 +51,7 @@ func (e *HTTPStatusError) Error() string {
 type BatchCallback[T any] func([]T) (int, int, error)
 
 type FuelPricesClient interface {
+	ShouldRefresh() bool
 	GetFuelPrices(BatchCallback[models.ForecourtPrices]) (int, int, error)
 	GetFillingStations(BatchCallback[models.PetrolFillingStation]) (int, int, error)
 	LastUpdated() *time.Time
@@ -70,10 +71,10 @@ type fuelPricesManager struct {
 	timeTracker timeTracker
 	client      *http.Client
 	metrics     *metrics.ClientFetchMetrics
-	fullRefresh bool
+	refresh     string
 }
 
-func NewFuelPricesClient(clientId, clientSecret string, fullRefresh bool) (FuelPricesClient, error) {
+func NewFuelPricesClient(clientId, clientSecret string, refresh string) (FuelPricesClient, error) {
 	baseUrl := "https://www.fuel-finder.service.gov.uk/api/v1"
 	if envBaseUrl := os.Getenv("FUEL_PRICES_API_BASE_URL"); envBaseUrl != "" {
 		baseUrl = envBaseUrl
@@ -84,8 +85,8 @@ func NewFuelPricesClient(clientId, clientSecret string, fullRefresh bool) (FuelP
 		timeTracker: timeTracker{
 			started: time.Now(),
 		},
-		fullRefresh: fullRefresh,
-		client:      &http.Client{},
+		refresh: refresh,
+		client:  &http.Client{},
 		authReq: models.AuthRequest{
 			ClientId:     clientId,
 			ClientSecret: clientSecret,
@@ -99,6 +100,10 @@ func NewFuelPricesClient(clientId, clientSecret string, fullRefresh bool) (FuelP
 	}
 
 	return mgr, nil
+}
+
+func (mgr *fuelPricesManager) ShouldRefresh() bool {
+	return mgr.refresh != "never"
 }
 
 func (mgr *fuelPricesManager) LastUpdated() *time.Time {
@@ -217,7 +222,7 @@ func (mgr *fuelPricesManager) checkTokenExpiry() error {
 
 func (mgr *fuelPricesManager) getEffectiveStartTimestamp(path string, lastFetch *time.Time) string {
 
-	if lastFetch == nil || lastFetch.IsZero() || mgr.fullRefresh {
+	if lastFetch == nil || lastFetch.IsZero() || mgr.refresh == "full" {
 		return ""
 	}
 
