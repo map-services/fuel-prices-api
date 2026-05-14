@@ -164,10 +164,15 @@ func (mgr *fuelPricesManager) authenticate() error {
 	mgr.tokenData = resp.Data
 	now := time.Now()
 	mgr.timeTracker.accessTokenExpiry = now.Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
-	mgr.timeTracker.refreshTokenExpiry = now.Add(time.Duration(resp.Data.RefreshTokenExpiresIn) * time.Second)
+	if resp.Data.RefreshTokenExpiresIn > 0 {
+		mgr.timeTracker.refreshTokenExpiry = now.Add(time.Duration(resp.Data.RefreshTokenExpiresIn) * time.Second)
+	} else {
+		mgr.timeTracker.refreshTokenExpiry = time.Time{}
+	}
 	log.Printf("Authenticated successfully, access token expires in %d seconds at %s", resp.Data.ExpiresIn, mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
-	log.Printf("Refresh token expires in %d seconds at %s", resp.Data.RefreshTokenExpiresIn, mgr.timeTracker.refreshTokenExpiry.Format(time.RFC3339))
-
+	if !mgr.timeTracker.refreshTokenExpiry.IsZero() {
+		log.Printf("Refresh token expires in %d seconds at %s", resp.Data.RefreshTokenExpiresIn, mgr.timeTracker.refreshTokenExpiry.Format(time.RFC3339))
+	}
 	return nil
 }
 

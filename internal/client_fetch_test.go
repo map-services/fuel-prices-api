@@ -70,9 +70,10 @@ func TestAuthenticate_Success(t *testing.T) {
 		resp := models.AuthResponse{
 			Success: true,
 			Data: models.TokenData{
-				AccessToken:  "test-access-token",
-				ExpiresIn:    3600,
-				RefreshToken: "test-refresh-token",
+				AccessToken:           "test-access-token",
+				ExpiresIn:             3600,
+				RefreshToken:          "test-refresh-token",
+				RefreshTokenExpiresIn: 86400,
 			},
 		}
 		w.WriteHeader(http.StatusOK)
@@ -89,6 +90,30 @@ func TestAuthenticate_Success(t *testing.T) {
 	assert.Equal(t, "test-refresh-token", mgr.tokenData.RefreshToken)
 	assert.False(t, mgr.timeTracker.accessTokenExpiry.IsZero())
 	assert.False(t, mgr.timeTracker.refreshTokenExpiry.IsZero())
+}
+
+func TestAuthenticate_NoRefreshTokenExpiry(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := models.AuthResponse{
+			Success: true,
+			Data: models.TokenData{
+				AccessToken:  "test-access-token",
+				ExpiresIn:    3600,
+				RefreshToken: "test-refresh-token",
+				// RefreshTokenExpiresIn is 0
+			},
+		}
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	mgr := setupTestClient(t, server.URL)
+	err := mgr.authenticate()
+
+	require.NoError(t, err)
+	assert.False(t, mgr.timeTracker.accessTokenExpiry.IsZero())
+	assert.True(t, mgr.timeTracker.refreshTokenExpiry.IsZero())
 }
 
 func TestAuthenticate_Failure(t *testing.T) {
