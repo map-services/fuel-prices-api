@@ -12,10 +12,11 @@ type AuthResponse struct {
 }
 
 type TokenData struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token,omitempty"`
+	AccessToken           string `json:"access_token"`
+	TokenType             string `json:"token_type"`
+	ExpiresIn             int    `json:"expires_in"`
+	RefreshToken          string `json:"refresh_token,omitempty"`
+	RefreshTokenExpiresIn int `json:"refresh_token_expires_in,omitempty"`
 }
 
 type TokenRefreshRequest struct {

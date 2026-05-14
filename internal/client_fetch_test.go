@@ -36,16 +36,22 @@ func TestHTTPStatusError_Error(t *testing.T) {
 }
 
 func setupTestClient(t *testing.T, baseUrl string) *fuelPricesManager {
+	now := time.Now()
 	return &fuelPricesManager{
 		baseUrl: baseUrl,
 		timeTracker: timeTracker{
-			started: time.Now(),
+			started:            now,
+			accessTokenExpiry:  now.Add(1 * time.Hour),
+			refreshTokenExpiry: now.Add(24 * time.Hour),
 		},
 		refresh: "incremental",
 		client:  &http.Client{},
 		authReq: models.AuthRequest{
 			ClientId:     "test-client-id",
 			ClientSecret: "test-client-secret",
+		},
+		tokenData: models.TokenData{
+			RefreshTokenExpiresIn: 86400, // 24 hours
 		},
 		metrics: metrics.NewClientFetchMetrics(prometheus.NewRegistry()),
 	}
@@ -64,9 +70,10 @@ func TestAuthenticate_Success(t *testing.T) {
 		resp := models.AuthResponse{
 			Success: true,
 			Data: models.TokenData{
-				AccessToken:  "test-access-token",
-				ExpiresIn:    3600,
-				RefreshToken: "test-refresh-token",
+				AccessToken:           "test-access-token",
+				ExpiresIn:             3600,
+				RefreshToken:          "test-refresh-token",
+				RefreshTokenExpiresIn: 86400,
 			},
 		}
 		w.WriteHeader(http.StatusOK)
@@ -81,7 +88,32 @@ func TestAuthenticate_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "test-access-token", mgr.tokenData.AccessToken)
 	assert.Equal(t, "test-refresh-token", mgr.tokenData.RefreshToken)
-	assert.False(t, mgr.timeTracker.lastAuth.IsZero())
+	assert.False(t, mgr.timeTracker.accessTokenExpiry.IsZero())
+	assert.False(t, mgr.timeTracker.refreshTokenExpiry.IsZero())
+}
+
+func TestAuthenticate_NoRefreshTokenExpiry(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := models.AuthResponse{
+			Success: true,
+			Data: models.TokenData{
+				AccessToken:  "test-access-token",
+				ExpiresIn:    3600,
+				RefreshToken: "test-refresh-token",
+				// RefreshTokenExpiresIn is 0
+			},
+		}
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	mgr := setupTestClient(t, server.URL)
+	err := mgr.authenticate()
+
+	require.NoError(t, err)
+	assert.False(t, mgr.timeTracker.accessTokenExpiry.IsZero())
+	assert.True(t, mgr.timeTracker.refreshTokenExpiry.IsZero())
 }
 
 func TestAuthenticate_Failure(t *testing.T) {
@@ -202,14 +234,14 @@ func TestCheckTokenExpiry(t *testing.T) {
 	mgr := setupTestClient(t, server.URL)
 
 	// Not expired
-	mgr.timeTracker.lastAuth = time.Now()
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(1 * time.Hour)
 	mgr.tokenData.ExpiresIn = 3600
 	err := mgr.checkTokenExpiry()
 	require.NoError(t, err)
 	assert.Empty(t, mgr.tokenData.AccessToken) // No refresh happened
 
 	// Expiring soon
-	mgr.timeTracker.lastAuth = time.Now().Add(-56 * time.Minute)
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(4 * time.Minute)
 	mgr.tokenData.ExpiresIn = 3600 // expires in 4 mins
 	err = mgr.checkTokenExpiry()
 	require.NoError(t, err)
@@ -234,7 +266,7 @@ func TestGetFuelPrices_Success(t *testing.T) {
 
 	mgr := setupTestClient(t, server.URL)
 	mgr.tokenData.ExpiresIn = 3600
-	mgr.timeTracker.lastAuth = time.Now()
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(1 * time.Hour)
 
 	count, dropped, err := mgr.GetFuelPrices(func(batch []models.ForecourtPrices) (int, int, error) {
 		return len(batch), 0, nil
@@ -263,7 +295,7 @@ func TestGetFillingStations_Success(t *testing.T) {
 
 	mgr := setupTestClient(t, server.URL)
 	mgr.tokenData.ExpiresIn = 3600
-	mgr.timeTracker.lastAuth = time.Now()
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(1 * time.Hour)
 
 	count, dropped, err := mgr.GetFillingStations(func(batch []models.PetrolFillingStation) (int, int, error) {
 		return len(batch), 0, nil
@@ -307,7 +339,7 @@ func TestFetchBatched_CallbackError(t *testing.T) {
 
 	mgr := setupTestClient(t, server.URL)
 	mgr.tokenData.ExpiresIn = 3600
-	mgr.timeTracker.lastAuth = time.Now()
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(1 * time.Hour)
 
 	_, _, err := mgr.GetFuelPrices(func(batch []models.ForecourtPrices) (int, int, error) {
 		return 0, 0, fmt.Errorf("callback failed")
@@ -332,7 +364,7 @@ func TestGetFuelPrices_DecodeError(t *testing.T) {
 
 	mgr := setupTestClient(t, server.URL)
 	mgr.tokenData.ExpiresIn = 3600
-	mgr.timeTracker.lastAuth = time.Now()
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(1 * time.Hour)
 
 	_, _, err := mgr.GetFuelPrices(nil)
 	require.Error(t, err)
@@ -346,8 +378,8 @@ func TestFetchBatched_TokenExpiryError(t *testing.T) {
 	defer server.Close()
 
 	mgr := setupTestClient(t, server.URL)
-	mgr.timeTracker.lastAuth = time.Now().Add(-1 * time.Hour)
-	mgr.tokenData.ExpiresIn = 1800 // expired
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(-1 * time.Minute) // already expired
+	mgr.tokenData.ExpiresIn = 1800
 
 	_, _, err := mgr.GetFuelPrices(nil)
 	require.Error(t, err)
