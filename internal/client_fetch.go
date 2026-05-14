@@ -58,10 +58,11 @@ type FuelPricesClient interface {
 }
 
 type timeTracker struct {
-	started         time.Time
-	lastAuth        time.Time
-	lastPfsFetch    time.Time
-	lastPricesFetch time.Time
+	started            time.Time
+	accessTokenExpiry  time.Time
+	refreshTokenExpiry time.Time
+	lastPfsFetch       time.Time
+	lastPricesFetch    time.Time
 }
 
 type fuelPricesManager struct {
@@ -161,13 +162,20 @@ func (mgr *fuelPricesManager) authenticate() error {
 	}
 
 	mgr.tokenData = resp.Data
-	mgr.timeTracker.lastAuth = time.Now()
-	log.Printf("Authenticated successfully, token expires in %d seconds", resp.Data.ExpiresIn)
+	now := time.Now()
+	mgr.timeTracker.accessTokenExpiry = now.Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
+	mgr.timeTracker.refreshTokenExpiry = now.Add(time.Duration(resp.Data.RefreshTokenExpiresIn) * time.Second)
+	log.Printf("Authenticated successfully, access token expires in %d seconds at %s", resp.Data.ExpiresIn, mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
+	log.Printf("Refresh token expires in %d seconds at %s", resp.Data.RefreshTokenExpiresIn, mgr.timeTracker.refreshTokenExpiry.Format(time.RFC3339))
 
 	return nil
 }
 
 func (mgr *fuelPricesManager) tokenRefresh() error {
+	if expiresSoon(mgr.timeTracker.refreshTokenExpiry) {
+		log.Printf("Refresh token has either expired or is expiring soon, re-authenticating...")
+		return mgr.authenticate()
+	}
 
 	tokenReq := models.TokenRefreshRequest{
 		ClientId:     mgr.authReq.ClientId,
@@ -201,17 +209,14 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 
 	mgr.tokenData.AccessToken = resp.Data.AccessToken
 	mgr.tokenData.ExpiresIn = resp.Data.ExpiresIn
-	mgr.timeTracker.lastAuth = time.Now()
-	log.Printf("Token refresh completed successfully, token expires in %d seconds", mgr.tokenData.ExpiresIn)
+	mgr.timeTracker.accessTokenExpiry = time.Now().Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
+	log.Printf("Token refresh completed successfully, access token expires in %d seconds at %s", resp.Data.ExpiresIn, mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
 
 	return nil
 }
 
 func (mgr *fuelPricesManager) checkTokenExpiry() error {
-	expiryTime := mgr.timeTracker.lastAuth.Add(time.Duration(mgr.tokenData.ExpiresIn) * time.Second)
-	expiresSoon := time.Until(expiryTime) < 5*time.Minute
-
-	if expiresSoon {
+	if expiresSoon(mgr.timeTracker.accessTokenExpiry) {
 		log.Printf("Access token has either expired or is expiring soon, refreshing...")
 		if err := mgr.tokenRefresh(); err != nil {
 			return fmt.Errorf("failed to refresh token: %w", err)
@@ -362,4 +367,8 @@ func (mgr *fuelPricesManager) post(url, contentType string, data any) (io.ReadCl
 	}
 
 	return resp.Body, nil
+}
+
+func expiresSoon(t time.Time) bool {
+	return time.Until(t) < 5*time.Minute
 }
