@@ -370,5 +370,5 @@ func (mgr *fuelPricesManager) post(url, contentType string, data any) (io.ReadCl
 }
 
 func expiresSoon(t time.Time) bool {
-	return time.Until(t) < 5*time.Minute
+	return !t.IsZero() && time.Until(t) < 5*time.Minute
 }
