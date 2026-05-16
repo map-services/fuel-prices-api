@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rm-hull/fuel-prices-api/internal"
-	"github.com/rm-hull/fuel-prices-api/internal/models"
-	"github.com/rm-hull/fuel-prices-api/internal/stats"
+	"github.com/map-services/fuel-prices-api/internal"
+	"github.com/map-services/fuel-prices-api/internal/models"
+	"github.com/map-services/fuel-prices-api/internal/stats"
 
 	"github.com/gin-gonic/gin"
 )

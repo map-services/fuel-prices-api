@@ -39,4 +39,3 @@ type DistributionResponse struct {
 	DistributionStatistics
 	Attribution []string `json:"attribution"`
 }
-

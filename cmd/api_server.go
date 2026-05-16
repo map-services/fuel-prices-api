@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/rm-hull/fuel-prices-api/internal"
-	"github.com/rm-hull/fuel-prices-api/internal/routes"
+	"github.com/map-services/fuel-prices-api/internal"
+	"github.com/map-services/fuel-prices-api/internal/routes"
 	healthcheck "github.com/tavsec/gin-healthcheck"
 	"github.com/tavsec/gin-healthcheck/checks"
 	hc_config "github.com/tavsec/gin-healthcheck/config"

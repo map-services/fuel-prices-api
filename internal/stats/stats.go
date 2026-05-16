@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/rm-hull/fuel-prices-api/internal/models"
+	"github.com/map-services/fuel-prices-api/internal/models"
 )
 
 const stalenessThreshold = 14 * 24 * time.Hour

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/rm-hull/fuel-prices-api/cmd"
+	"github.com/map-services/fuel-prices-api/cmd"
 
 	"github.com/spf13/cobra"
 )

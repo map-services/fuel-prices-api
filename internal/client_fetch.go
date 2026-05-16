@@ -15,9 +15,9 @@ import (
 	// neturl "net/url"
 	"time"
 
+	"github.com/map-services/fuel-prices-api/internal/metrics"
+	"github.com/map-services/fuel-prices-api/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rm-hull/fuel-prices-api/internal/metrics"
-	"github.com/rm-hull/fuel-prices-api/internal/models"
 )
 
 // HTTPStatusError is returned when the remote server responds with a non-2xx status.

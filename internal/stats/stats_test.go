@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rm-hull/fuel-prices-api/internal/models"
+	"github.com/map-services/fuel-prices-api/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 

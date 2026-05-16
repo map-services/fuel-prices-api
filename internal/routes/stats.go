@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rm-hull/fuel-prices-api/internal"
-	"github.com/rm-hull/fuel-prices-api/internal/models"
+	"github.com/map-services/fuel-prices-api/internal"
+	"github.com/map-services/fuel-prices-api/internal/models"
 )
 
 func SnapshotStats(repo internal.FuelPricesRepository) func(c *gin.Context) {

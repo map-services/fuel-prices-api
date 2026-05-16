@@ -16,7 +16,7 @@ type TokenData struct {
 	TokenType             string `json:"token_type"`
 	ExpiresIn             int    `json:"expires_in"`
 	RefreshToken          string `json:"refresh_token,omitempty"`
-	RefreshTokenExpiresIn int `json:"refresh_token_expires_in,omitempty"`
+	RefreshTokenExpiresIn int    `json:"refresh_token_expires_in,omitempty"`
 }
 
 type TokenRefreshRequest struct {

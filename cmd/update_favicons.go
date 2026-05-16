@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/cockroachdb/errors"
-	"github.com/rm-hull/fuel-prices-api/internal/brands"
-	"github.com/rm-hull/fuel-prices-api/internal/favicon"
-	"github.com/rm-hull/fuel-prices-api/internal/models"
+	"github.com/map-services/fuel-prices-api/internal/brands"
+	"github.com/map-services/fuel-prices-api/internal/favicon"
+	"github.com/map-services/fuel-prices-api/internal/models"
 )
 
 func UpdateFaviconsInCSV(csvFile string) error {

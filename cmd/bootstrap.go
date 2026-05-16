@@ -12,9 +12,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rm-hull/godx"
 
-	"github.com/rm-hull/fuel-prices-api/internal"
-	"github.com/rm-hull/fuel-prices-api/internal/brands"
-	"github.com/rm-hull/fuel-prices-api/internal/metrics"
+	"github.com/map-services/fuel-prices-api/internal"
+	"github.com/map-services/fuel-prices-api/internal/brands"
+	"github.com/map-services/fuel-prices-api/internal/metrics"
 )
 
 // bootstrap initialises shared resources used by both the API server and import

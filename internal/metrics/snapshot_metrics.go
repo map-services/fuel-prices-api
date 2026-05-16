@@ -3,8 +3,8 @@ package metrics
 import (
 	"log"
 
+	"github.com/map-services/fuel-prices-api/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rm-hull/fuel-prices-api/internal/models"
 )
 
 type fuelPricesSnapshotCollector struct {

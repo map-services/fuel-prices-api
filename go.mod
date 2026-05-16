@@ -1,4 +1,4 @@
-module github.com/rm-hull/fuel-prices-api
+module github.com/map-services/fuel-prices-api
 
 go 1.26
 
