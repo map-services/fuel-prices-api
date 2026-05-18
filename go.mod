@@ -58,7 +58,7 @@ require (
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
-	github.com/quic-go/quic-go v0.59.0 // indirect
+	github.com/quic-go/quic-go v0.59.1 // indirect
 	github.com/rabbitmq/amqp091-go v1.11.0 // indirect
 	github.com/redis/go-redis/v9 v9.19.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
