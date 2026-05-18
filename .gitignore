@@ -32,4 +32,10 @@ go.work.sum
 .vscode/settings.json
 data/
 __debug_bin*
-fuel-prices-api
+
+# gemini-cli settings
+.gemini/
+gemini-artifacts/
+
+# GitHub App credentials
+gha-creds-*.json
