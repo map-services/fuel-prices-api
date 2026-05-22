@@ -212,13 +212,15 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 		return fmt.Errorf("authentication failed: %s", resp.Message)
 	}
 
+	now := time.Now()
 	mgr.tokenData.AccessToken = resp.Data.AccessToken
 	mgr.tokenData.ExpiresIn = resp.Data.ExpiresIn
-	mgr.timeTracker.accessTokenExpiry = time.Now().Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
+	mgr.timeTracker.accessTokenExpiry = now.Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
 	if resp.Data.RefreshToken != "" {
 		mgr.tokenData.RefreshToken = resp.Data.RefreshToken
+		mgr.tokenData.RefreshTokenExpiresIn = resp.Data.RefreshTokenExpiresIn
 		if resp.Data.RefreshTokenExpiresIn > 0 {
-			mgr.timeTracker.refreshTokenExpiry = time.Now().Add(time.Duration(resp.Data.RefreshTokenExpiresIn) * time.Second)
+			mgr.timeTracker.refreshTokenExpiry = now.Add(time.Duration(resp.Data.RefreshTokenExpiresIn) * time.Second)
 		} else {
 			mgr.timeTracker.refreshTokenExpiry = time.Time{}
 		}
