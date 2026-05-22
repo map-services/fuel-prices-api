@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/robfig/cron/v3"
 )
@@ -13,34 +13,34 @@ func StartCron(client FuelPricesClient, repo FuelPricesRepository) (*cron.Cron, 
 
 	c := cron.New()
 
-	log.Print("Starting CRON jobs to update petrol filling stations and fuel prices")
+	slog.Info("Starting CRON jobs to update petrol filling stations and fuel prices")
 
 	if _, err := c.AddFunc(CRON_SCHEDULE_PFS, func() {
 		if !client.ShouldRefresh() {
-			log.Print("Skipping filling stations fetch due to refresh policy")
+			slog.Info("Skipping filling stations fetch due to refresh policy")
 			return
 		}
 		numPFS, dropped, err := client.GetFillingStations(repo.InsertPFS)
 		if err != nil {
-			log.Printf("Error fetching PFS: %v (dropped: %d) \n", err, dropped)
+			slog.Error("Error fetching PFS", "error", err, "dropped", dropped)
 			return
 		}
-		log.Printf("Inserted %d PFS", numPFS)
+		slog.Info("Inserted PFS", "count", numPFS)
 	}); err != nil {
 		return nil, err
 	}
 
 	if _, err := c.AddFunc(CRON_SCHEDULE_PRICES, func() {
 		if !client.ShouldRefresh() {
-			log.Print("Skipping fuel prices fetch due to refresh policy")
+			slog.Info("Skipping fuel prices fetch due to refresh policy")
 			return
 		}
 		numPrices, dropped, err := client.GetFuelPrices(repo.InsertPrices)
 		if err != nil {
-			log.Printf("Error fetching fuel prices: %v\n", err)
+			slog.Error("Error fetching fuel prices", "error", err)
 			return
 		}
-		log.Printf("Inserted %d fuel prices (dropped: %d) ", numPrices, dropped)
+		slog.Info("Inserted fuel prices", "count", numPrices, "dropped", dropped)
 	}); err != nil {
 		return nil, err
 	}

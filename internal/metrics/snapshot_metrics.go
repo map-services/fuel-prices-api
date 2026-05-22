@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/map-services/fuel-prices-api/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,7 +27,7 @@ func (c *fuelPricesSnapshotCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *fuelPricesSnapshotCollector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := c.snapshotFunc()
 	if err != nil {
-		log.Printf("failed to collect fuel price snapshot stats: %v", err)
+		slog.Error("failed to collect fuel price snapshot stats", "error", err)
 		return
 	}
 

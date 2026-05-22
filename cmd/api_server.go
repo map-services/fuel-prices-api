@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/Depado/ginprom"
@@ -13,6 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/map-services/fuel-prices-api/internal"
+	"github.com/map-services/fuel-prices-api/internal/middleware"
 	"github.com/map-services/fuel-prices-api/internal/routes"
 	healthcheck "github.com/tavsec/gin-healthcheck"
 	"github.com/tavsec/gin-healthcheck/checks"
@@ -27,7 +28,7 @@ func ApiServer(dbPath string, port int, refresh string, debug bool) error {
 	}
 	defer func() {
 		if err := repo.Close(); err != nil {
-			log.Printf("failed to close repository: %v", err)
+			slog.Error("failed to close repository", "error", err)
 		}
 	}()
 
@@ -45,14 +46,14 @@ func ApiServer(dbPath string, port int, refresh string, debug bool) error {
 
 	r.Use(
 		gin.Recovery(),
-		gin.LoggerWithWriter(gin.DefaultWriter, "/healthz", "/metrics"),
+		middleware.RequestLogger(slog.Default(), "/healthz", "/metrics"),
 		prometheus.Instrument(),
 		compress.Compress(),
 		cors.Default(),
 	)
 
 	if debug {
-		log.Println("WARNING: pprof endpoints are enabled and exposed. Do not run with this flag in production.")
+		slog.Warn("pprof endpoints are enabled and exposed. Do not run with this flag in production.")
 		pprof.Register(r)
 	}
 
@@ -78,7 +79,7 @@ func ApiServer(dbPath string, port int, refresh string, debug bool) error {
 	v1.GET("/stats/distribution", routes.DistributionStats(repo))
 
 	addr := fmt.Sprintf(":%d", port)
-	log.Printf("Starting HTTP API Server on port %d...", port)
+	slog.Info("Starting HTTP API Server", "port", port)
 	if err := r.Run(addr); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("HTTP API Server failed to start on port %d: %v", port, err)
 	}

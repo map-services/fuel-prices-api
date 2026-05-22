@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -22,7 +22,7 @@ import (
 // if something failed during startup.
 func bootstrap(dbPath, refresh string, debug bool) (internal.FuelPricesClient, internal.FuelPricesRepository, error) {
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		slog.Warn("No .env file found")
 	}
 
 	environment := "development"
@@ -41,9 +41,8 @@ func bootstrap(dbPath, refresh string, debug bool) (internal.FuelPricesClient, i
 	}
 	defer sentry.Flush(2 * time.Second)
 
-	godx.GitVersion()
-	godx.EnvironmentVars()
-	godx.UserInfo()
+	logger := internal.SetupLogger()
+	godx.Diagnostics(logger)
 
 	clientId := os.Getenv("CLIENT_ID")
 	clientSecret := os.Getenv("CLIENT_SECRET")

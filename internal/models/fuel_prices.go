@@ -2,7 +2,8 @@ package models
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -108,7 +109,7 @@ func (fp *FuelPrice) ToTuple(nodeId string) []any {
 
 	price, logMsg := cleansePrice(fp.Price)
 	if logMsg != "" {
-		log.Println(logMsg)
+		slog.Warn(logMsg)
 	}
 
 	return []any{
@@ -128,7 +129,8 @@ func (fp *FuelPrice) IsPriceOutOfBounds() bool {
 func toJSON(v any) string {
 	jsonBytes, err := json.Marshal(v)
 	if err != nil {
-		log.Fatalf("Error marshaling to JSON: %v", err)
+		slog.Error("error marshaling to JSON", "error", err)
+		os.Exit(1)
 	}
 	return string(jsonBytes)
 }

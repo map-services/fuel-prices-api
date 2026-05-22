@@ -2,7 +2,7 @@ package routes
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"net/http"
 	"strconv"
@@ -39,7 +39,7 @@ func Search(repo internal.FuelPricesRepository, client internal.FuelPricesClient
 		results, err := repo.Search(bbox, limit)
 
 		if err != nil {
-			log.Printf("error while fetching fuel prices: %v", err)
+			slog.Error("error while fetching fuel prices", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}

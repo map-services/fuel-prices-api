@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/map-services/fuel-prices-api/cmd"
 
@@ -26,7 +27,8 @@ func main() {
 		Short: "Start HTTP API server",
 		Run: func(_ *cobra.Command, _ []string) {
 			if err = cmd.ApiServer(dbPath, port, refresh, debug); err != nil {
-				log.Fatalf("API Server failed: %v", err)
+				slog.Error("API Server failed", "error", err)
+				os.Exit(1)
 			}
 		},
 	}
@@ -36,7 +38,8 @@ func main() {
 		Short: "Perform one-off import of fuel prices and filling stations from the GOV.UK API",
 		Run: func(_ *cobra.Command, _ []string) {
 			if err := cmd.Import(dbPath); err != nil {
-				log.Fatalf("Import failed: %v", err)
+				slog.Error("Import failed", "error", err)
+				os.Exit(1)
 			}
 		},
 	}
@@ -46,7 +49,8 @@ func main() {
 		Short: "Update favicons",
 		Run: func(_ *cobra.Command, _ []string) {
 			if err := cmd.UpdateFaviconsInCSV(filePath); err != nil {
-				log.Fatalf("Update favicons failed: %v", err)
+				slog.Error("Update favicons failed", "error", err)
+				os.Exit(1)
 			}
 		},
 	}
@@ -62,6 +66,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "./data/fuel_prices.db", "Path to fuel-prices SQLite database")
 
 	if err = rootCmd.Execute(); err != nil {
-		log.Fatal(err)
+		slog.Error("fatal error", "error", err)
+		os.Exit(1)
 	}
 }

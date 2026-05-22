@@ -2,7 +2,7 @@ package favicon
 
 import (
 	"crypto/tls"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"sort"
@@ -83,7 +83,7 @@ func Extract(url string) (*IconInfo, error) {
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			log.Printf("failed to close request body: %v", err)
+			slog.Error("failed to close request body", "error", err)
 		}
 	}()
 
