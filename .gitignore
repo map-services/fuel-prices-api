@@ -39,3 +39,4 @@ gemini-artifacts/
 
 # GitHub App credentials
 gha-creds-*.json
+.antigravitycli/
