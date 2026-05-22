@@ -190,7 +190,7 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 	body, err := mgr.post(url, "application/json", tokenReq)
 	if err != nil {
 		var stErr *HTTPStatusError
-		if errors.As(err, &stErr) && stErr.StatusCode >= http.StatusInternalServerError {
+		if errors.As(err, &stErr) {
 			log.Printf("Failed to refresh access token: %v", err)
 			log.Printf("Trying to recover from token refresh error response (HTTP %d)...", stErr.StatusCode)
 			return mgr.authenticate()
@@ -212,9 +212,19 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 		return fmt.Errorf("authentication failed: %s", resp.Message)
 	}
 
+	now := time.Now()
 	mgr.tokenData.AccessToken = resp.Data.AccessToken
 	mgr.tokenData.ExpiresIn = resp.Data.ExpiresIn
-	mgr.timeTracker.accessTokenExpiry = time.Now().Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
+	mgr.timeTracker.accessTokenExpiry = now.Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
+	if resp.Data.RefreshToken != "" {
+		mgr.tokenData.RefreshToken = resp.Data.RefreshToken
+		mgr.tokenData.RefreshTokenExpiresIn = resp.Data.RefreshTokenExpiresIn
+		if resp.Data.RefreshTokenExpiresIn > 0 {
+			mgr.timeTracker.refreshTokenExpiry = now.Add(time.Duration(resp.Data.RefreshTokenExpiresIn) * time.Second)
+		} else {
+			mgr.timeTracker.refreshTokenExpiry = time.Time{}
+		}
+	}
 	log.Printf("Token refresh completed successfully, access token expires in %d seconds at %s", resp.Data.ExpiresIn, mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
 
 	return nil
@@ -247,10 +257,6 @@ func fetchBatched[T any](
 	decode func(io.ReadCloser, int) ([]T, error),
 	callback BatchCallback[T],
 ) (int, int, error) {
-	if err := mgr.checkTokenExpiry(); err != nil {
-		return 0, 0, err
-	}
-
 	batchNo := 1
 	count := 0
 	totalDropped := 0
@@ -259,6 +265,10 @@ func fetchBatched[T any](
 	effectiveStartTimestamp := mgr.getEffectiveStartTimestamp(path, lastFetch)
 
 	for {
+		if err := mgr.checkTokenExpiry(); err != nil {
+			return 0, 0, err
+		}
+
 		params := neturl.Values{}
 		params.Add("batch-number", strconv.Itoa(batchNo))
 		if effectiveStartTimestamp != "" {

@@ -221,6 +221,58 @@ func TestTokenRefresh_RetryOnServerError(t *testing.T) {
 	assert.Equal(t, 2, calls)
 }
 
+func TestTokenRefresh_RecoverOnClientError(t *testing.T) {
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if r.URL.Path == "/oauth/regenerate_access_token" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if r.URL.Path == "/oauth/generate_access_token" {
+			resp := models.AuthResponse{
+				Success: true,
+				Data:    models.TokenData{AccessToken: "recovered-token", ExpiresIn: 3600},
+			}
+			_ = json.NewEncoder(w).Encode(resp)
+			return
+		}
+	}))
+	defer server.Close()
+
+	mgr := setupTestClient(t, server.URL)
+	err := mgr.tokenRefresh()
+
+	require.NoError(t, err)
+	assert.Equal(t, "recovered-token", mgr.tokenData.AccessToken)
+	assert.Equal(t, 2, calls)
+}
+
+func TestTokenRefresh_UpdatesRefreshToken(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := models.AuthResponse{
+			Success: true,
+			Data: models.TokenData{
+				AccessToken:           "new-access-token",
+				ExpiresIn:             3600,
+				RefreshToken:          "new-refresh-token",
+				RefreshTokenExpiresIn: 7200,
+			},
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	mgr := setupTestClient(t, server.URL)
+	mgr.tokenData.RefreshToken = "old-refresh-token"
+
+	err := mgr.tokenRefresh()
+	require.NoError(t, err)
+	assert.Equal(t, "new-access-token", mgr.tokenData.AccessToken)
+	assert.Equal(t, "new-refresh-token", mgr.tokenData.RefreshToken)
+	assert.False(t, mgr.timeTracker.refreshTokenExpiry.IsZero())
+}
+
 func TestCheckTokenExpiry(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := models.AuthResponse{
