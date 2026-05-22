@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 )
 
 func Import(dbPath string) error {
@@ -13,7 +13,7 @@ func Import(dbPath string) error {
 	}
 	defer func() {
 		if err := repo.Close(); err != nil {
-			log.Printf("failed to close repository: %v", err)
+			slog.Error("failed to close repository", "error", err)
 		}
 	}()
 
@@ -21,13 +21,13 @@ func Import(dbPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to fetch filling stations: %w", err)
 	}
-	log.Printf("imported %d filling stations (dropped: %d)", numPFS, dropped)
+	slog.Info("imported filling stations", "count", numPFS, "dropped", dropped)
 
 	numPrices, dropped, err := client.GetFuelPrices(repo.InsertPrices)
 	if err != nil {
 		return fmt.Errorf("failed to fetch fuel prices: %w", err)
 	}
-	log.Printf("imported %d fuel prices (dropped: %d)", numPrices, dropped)
+	slog.Info("imported fuel prices", "count", numPrices, "dropped", dropped)
 
 	return nil
 }

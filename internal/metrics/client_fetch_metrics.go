@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"log"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/url"
@@ -66,7 +66,7 @@ func (m *ClientFetchMetrics) RecordHttpCall(start time.Time, method, endpoint st
 		u, parseErr := url.Parse(endpoint)
 		path := u.Path
 		if parseErr != nil {
-			log.Printf("failed to parse endpoint URL '%s' for metrics: %v", endpoint, parseErr)
+			slog.Error("failed to parse endpoint URL for metrics", "endpoint", endpoint, "error", parseErr)
 			path = "invalid_url"
 		}
 		m.ResponseLatency.WithLabelValues(path, method).Observe(time.Since(start).Seconds())

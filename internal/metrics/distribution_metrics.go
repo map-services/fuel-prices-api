@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"log"
+	"log/slog"
 	"strconv"
 
 	"github.com/map-services/fuel-prices-api/internal/models"
@@ -20,7 +20,7 @@ func (c *fuelPricesDistributionCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *fuelPricesDistributionCollector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := c.distFunc()
 	if err != nil {
-		log.Printf("failed to collect fuel price distribution stats: %v", err)
+		slog.Error("failed to collect fuel price distribution stats", "error", err)
 		return
 	}
 

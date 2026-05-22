@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/map-services/fuel-prices-api/internal"
@@ -18,7 +18,7 @@ func PriceHistory(repo internal.FuelPricesRepository, client internal.FuelPrices
 
 		fuelTypes, err := repo.FuelTypes()
 		if err != nil {
-			log.Printf("error while fetching fuel types: %v", err)
+			slog.Error("error while fetching fuel types", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
@@ -31,7 +31,7 @@ func PriceHistory(repo internal.FuelPricesRepository, client internal.FuelPrices
 		results, err := repo.PriceHistory(nodeId, fuelType)
 
 		if err != nil {
-			log.Printf("error while fetching price history: %v", err)
+			slog.Error("error while fetching price history", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}

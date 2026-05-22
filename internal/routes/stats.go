@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +14,7 @@ func SnapshotStats(repo internal.FuelPricesRepository) func(c *gin.Context) {
 		stats, err := repo.SnapshotStats()
 
 		if err != nil {
-			log.Printf("error while fetching snapshot stats: %v", err)
+			slog.Error("error while fetching snapshot stats", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
@@ -31,7 +31,7 @@ func DistributionStats(repo internal.FuelPricesRepository) func(c *gin.Context) 
 		stats, err := repo.DistributionStats()
 
 		if err != nil {
-			log.Printf("error while fetching distribution stats: %v", err)
+			slog.Error("error while fetching distribution stats", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}

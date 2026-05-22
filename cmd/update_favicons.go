@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/csv"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/cockroachdb/errors"
@@ -21,11 +21,11 @@ func UpdateFaviconsInCSV(csvFile string) error {
 	updated := make([]*models.Retailer, 0, len(retailers))
 	for idx, record := range retailers {
 
-		log.Printf("Processing record %d: %s", idx, record.WebsiteUrl)
+		slog.Info("Processing record", "index", idx, "url", record.WebsiteUrl)
 
 		iconInfo, err := favicon.Extract(record.WebsiteUrl)
 		if err != nil {
-			log.Printf("failed to extract favicon for %s: %v", record.WebsiteUrl, err)
+			slog.Error("failed to extract favicon", "url", record.WebsiteUrl, "error", err)
 		} else {
 			record.LogoUrl = &iconInfo.Href
 		}
@@ -38,7 +38,7 @@ func UpdateFaviconsInCSV(csvFile string) error {
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Printf("error closing file: %v", err)
+			slog.Error("error closing file", "error", err)
 		}
 	}()
 

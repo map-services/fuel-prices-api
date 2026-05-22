@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"log"
+	"log/slog"
 	"sort"
 	"sync"
 	"time"
@@ -89,7 +89,7 @@ func (repo *sqliteRepository) InsertPFS(batch []models.PetrolFillingStation) (in
 	defer func() {
 		if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil {
-				log.Printf("error rolling back transaction: %v", rbErr)
+				slog.Error("error rolling back transaction", "error", rbErr)
 			}
 		}
 	}()
@@ -100,7 +100,7 @@ func (repo *sqliteRepository) InsertPFS(batch []models.PetrolFillingStation) (in
 	}
 	defer func() {
 		if err := stmt.Close(); err != nil {
-			log.Printf("failed to close statement: %v", err)
+			slog.Error("failed to close statement", "error", err)
 		}
 	}()
 
@@ -133,7 +133,7 @@ func (repo *sqliteRepository) InsertPrices(batch []models.ForecourtPrices) (int,
 	defer func() {
 		if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil {
-				log.Printf("error rolling back transaction: %v", rbErr)
+				slog.Error("error rolling back transaction", "error", rbErr)
 			}
 		}
 	}()
@@ -144,7 +144,7 @@ func (repo *sqliteRepository) InsertPrices(batch []models.ForecourtPrices) (int,
 	}
 	defer func() {
 		if err := stmt.Close(); err != nil {
-			log.Printf("failed to close statement: %v", err)
+			slog.Error("failed to close statement", "error", err)
 		}
 	}()
 
@@ -153,7 +153,7 @@ func (repo *sqliteRepository) InsertPrices(batch []models.ForecourtPrices) (int,
 	for _, forecourtPrices := range batch {
 		for _, fuelPrice := range forecourtPrices.FuelPrices {
 			if fuelPrice.IsPriceOutOfBounds() {
-				log.Printf("WARNING: %s price of %0.2fp looks like an input-entry error; dropping fuel_price record for node_id: %s", fuelPrice.FuelType, fuelPrice.Price, forecourtPrices.NodeId)
+				slog.Warn("price looks like an input-entry error; dropping fuel_price record", "fuelType", fuelPrice.FuelType, "price", fuelPrice.Price, "nodeId", forecourtPrices.NodeId)
 				dropped++
 				continue
 			}
@@ -215,7 +215,7 @@ func (repo *sqliteRepository) fetchPfs(boundingBox []float64, results *[]models.
 	}
 	defer func() {
 		if closeErr := rows.Close(); closeErr != nil {
-			log.Printf("failed to close rows: %v", closeErr)
+			slog.Error("failed to close rows", "error", closeErr)
 		}
 	}()
 
@@ -267,7 +267,7 @@ func (repo *sqliteRepository) fetchPrices(boundingBox []float64, results *map[st
 	}
 	defer func() {
 		if closeErr := rows.Close(); closeErr != nil {
-			log.Printf("failed to close rows: %v", closeErr)
+			slog.Error("failed to close rows", "error", closeErr)
 		}
 	}()
 
@@ -315,7 +315,7 @@ func (repo *sqliteRepository) snapshotQuery() (*models.SnapshotStatistics, error
 	}
 	defer func() {
 		if closeErr := snapshotRows.Close(); closeErr != nil {
-			log.Printf("failed to close snapshot rows: %v", closeErr)
+			slog.Error("failed to close snapshot rows", "error", closeErr)
 		}
 	}()
 
@@ -349,7 +349,7 @@ func (repo *sqliteRepository) distributionQuery() (*models.DistributionStatistic
 	}
 	defer func() {
 		if closeErr := distributionRows.Close(); closeErr != nil {
-			log.Printf("failed to close distribution rows: %v", closeErr)
+			slog.Error("failed to close distribution rows", "error", closeErr)
 		}
 	}()
 
@@ -422,7 +422,7 @@ func (repo *sqliteRepository) PriceHistory(nodeId, fuelType string) ([]models.Fu
 	}
 	defer func() {
 		if closeErr := rows.Close(); closeErr != nil {
-			log.Printf("failed to close rows: %v", closeErr)
+			slog.Error("failed to close rows", "error", closeErr)
 		}
 	}()
 
@@ -457,7 +457,7 @@ func (repo *sqliteRepository) fuelTypesQuery() (map[string]struct{}, error) {
 	}
 	defer func() {
 		if closeErr := rows.Close(); closeErr != nil {
-			log.Printf("failed to close snapshot rows: %v", closeErr)
+			slog.Error("failed to close snapshot rows", "error", closeErr)
 		}
 	}()
 

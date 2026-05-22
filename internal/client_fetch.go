@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	neturl "net/url"
 	"os"
@@ -148,7 +148,7 @@ func (mgr *fuelPricesManager) authenticate() error {
 	}
 	defer func() {
 		if err := body.Close(); err != nil {
-			log.Printf("failed to close body: %v", err)
+			slog.Error("failed to close body", "error", err)
 		}
 	}()
 
@@ -169,16 +169,16 @@ func (mgr *fuelPricesManager) authenticate() error {
 	} else {
 		mgr.timeTracker.refreshTokenExpiry = time.Time{}
 	}
-	log.Printf("Authenticated successfully, access token expires in %d seconds at %s", resp.Data.ExpiresIn, mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
+	slog.Info("Authenticated successfully", "expiresIn", resp.Data.ExpiresIn, "accessTokenExpiry", mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
 	if !mgr.timeTracker.refreshTokenExpiry.IsZero() {
-		log.Printf("Refresh token expires in %d seconds at %s", resp.Data.RefreshTokenExpiresIn, mgr.timeTracker.refreshTokenExpiry.Format(time.RFC3339))
+		slog.Info("Refresh token expires", "expiresIn", resp.Data.RefreshTokenExpiresIn, "refreshTokenExpiry", mgr.timeTracker.refreshTokenExpiry.Format(time.RFC3339))
 	}
 	return nil
 }
 
 func (mgr *fuelPricesManager) tokenRefresh() error {
 	if expiresSoon(mgr.timeTracker.refreshTokenExpiry) {
-		log.Printf("Refresh token has either expired or is expiring soon, re-authenticating...")
+		slog.Warn("Refresh token has either expired or is expiring soon, re-authenticating...")
 		return mgr.authenticate()
 	}
 
@@ -191,15 +191,15 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 	if err != nil {
 		var stErr *HTTPStatusError
 		if errors.As(err, &stErr) {
-			log.Printf("Failed to refresh access token: %v", err)
-			log.Printf("Trying to recover from token refresh error response (HTTP %d)...", stErr.StatusCode)
+			slog.Error("Failed to refresh access token", "error", err)
+			slog.Warn("Trying to recover from token refresh error response", "statusCode", stErr.StatusCode)
 			return mgr.authenticate()
 		}
 		return err
 	}
 	defer func() {
 		if err := body.Close(); err != nil {
-			log.Printf("failed to close body: %v", err)
+			slog.Error("failed to close body", "error", err)
 		}
 	}()
 
@@ -225,14 +225,14 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 			mgr.timeTracker.refreshTokenExpiry = time.Time{}
 		}
 	}
-	log.Printf("Token refresh completed successfully, access token expires in %d seconds at %s", resp.Data.ExpiresIn, mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
+	slog.Info("Token refresh completed successfully", "expiresIn", resp.Data.ExpiresIn, "accessTokenExpiry", mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
 
 	return nil
 }
 
 func (mgr *fuelPricesManager) checkTokenExpiry() error {
 	if expiresSoon(mgr.timeTracker.accessTokenExpiry) {
-		log.Printf("Access token has either expired or is expiring soon, refreshing...")
+		slog.Warn("Access token has either expired or is expiring soon, refreshing...")
 		if err := mgr.tokenRefresh(); err != nil {
 			return fmt.Errorf("failed to refresh token: %w", err)
 		}
@@ -246,7 +246,7 @@ func (mgr *fuelPricesManager) getEffectiveStartTimestamp(path string, lastFetch 
 		return ""
 	}
 
-	log.Printf("Time since last fetch for %s: %s", path, time.Since(*lastFetch))
+	slog.Info("Time since last fetch", "path", path, "elapsed", time.Since(*lastFetch))
 	return lastFetch.Format("2006-01-02 15:04:05") // Not quite RFC3339 ...
 }
 
@@ -279,7 +279,7 @@ func fetchBatched[T any](
 		if err != nil {
 			var stErr *HTTPStatusError
 			if errors.As(err, &stErr) && stErr.StatusCode == http.StatusNotFound {
-				log.Printf("No more batches available for %s, stopping at batch %d", path, batchNo-1)
+				slog.Info("No more batches available", "path", path, "lastBatch", batchNo-1)
 				break
 			}
 			return 0, 0, err
@@ -312,7 +312,7 @@ func fetchBatched[T any](
 
 func (mgr *fuelPricesManager) get(url string) (io.ReadCloser, error) {
 	start := time.Now()
-	log.Printf("GET %s", url)
+	slog.Info("GET", "url", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -346,7 +346,7 @@ func (mgr *fuelPricesManager) get(url string) (io.ReadCloser, error) {
 
 func (mgr *fuelPricesManager) post(url, contentType string, data any) (io.ReadCloser, error) {
 	start := time.Now()
-	log.Printf("POST %s", url)
+	slog.Info("POST", "url", url)
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request body: %w", err)
