@@ -265,7 +265,7 @@ func TestTokenRefresh_UpdatesRefreshToken(t *testing.T) {
 
 	mgr := setupTestClient(t, server.URL)
 	mgr.tokenData.RefreshToken = "old-refresh-token"
-	
+
 	err := mgr.tokenRefresh()
 	require.NoError(t, err)
 	assert.Equal(t, "new-access-token", mgr.tokenData.AccessToken)
