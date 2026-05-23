@@ -163,15 +163,21 @@ func (mgr *fuelPricesManager) authenticate() error {
 
 	mgr.tokenData = resp.Data
 	now := time.Now()
-	mgr.timeTracker.accessTokenExpiry = now.Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
+	expiry := time.Duration(resp.Data.ExpiresIn) * time.Second
+	mgr.timeTracker.accessTokenExpiry = now.Add(expiry)
 	if resp.Data.RefreshTokenExpiresIn > 0 {
 		mgr.timeTracker.refreshTokenExpiry = now.Add(time.Duration(resp.Data.RefreshTokenExpiresIn) * time.Second)
 	} else {
 		mgr.timeTracker.refreshTokenExpiry = time.Time{}
 	}
-	slog.Info("Authenticated successfully", "expiresIn", resp.Data.ExpiresIn, "accessTokenExpiry", mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
+	slog.Info("Authenticated successfully",
+		"expiresIn", humanDuration(expiry),
+		"accessTokenExpiry", mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
+
 	if !mgr.timeTracker.refreshTokenExpiry.IsZero() {
-		slog.Info("Refresh token expires", "expiresIn", resp.Data.RefreshTokenExpiresIn, "refreshTokenExpiry", mgr.timeTracker.refreshTokenExpiry.Format(time.RFC3339))
+		slog.Info("Refresh token expires",
+			"expiresIn", humanDuration(time.Duration(resp.Data.RefreshTokenExpiresIn)*time.Second),
+			"refreshTokenExpiry", mgr.timeTracker.refreshTokenExpiry.Format(time.RFC3339))
 	}
 	return nil
 }
@@ -213,9 +219,10 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 	}
 
 	now := time.Now()
+	expiry := time.Duration(resp.Data.ExpiresIn) * time.Second
 	mgr.tokenData.AccessToken = resp.Data.AccessToken
 	mgr.tokenData.ExpiresIn = resp.Data.ExpiresIn
-	mgr.timeTracker.accessTokenExpiry = now.Add(time.Duration(resp.Data.ExpiresIn) * time.Second)
+	mgr.timeTracker.accessTokenExpiry = now.Add(expiry)
 	if resp.Data.RefreshToken != "" {
 		mgr.tokenData.RefreshToken = resp.Data.RefreshToken
 		mgr.tokenData.RefreshTokenExpiresIn = resp.Data.RefreshTokenExpiresIn
@@ -225,7 +232,10 @@ func (mgr *fuelPricesManager) tokenRefresh() error {
 			mgr.timeTracker.refreshTokenExpiry = time.Time{}
 		}
 	}
-	slog.Info("Token refresh completed successfully", "expiresIn", resp.Data.ExpiresIn, "accessTokenExpiry", mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
+
+	slog.Info("Token refresh completed successfully",
+		"expiresIn", humanDuration(expiry),
+		"accessTokenExpiry", mgr.timeTracker.accessTokenExpiry.Format(time.RFC3339))
 
 	return nil
 }
@@ -246,7 +256,11 @@ func (mgr *fuelPricesManager) getEffectiveStartTimestamp(path string, lastFetch 
 		return ""
 	}
 
-	slog.Info("Time since last fetch", "path", path, "elapsed", time.Since(*lastFetch))
+	slog.Info("Time since last fetch",
+		"path", path,
+		"elapsed", humanDuration(time.Since(*lastFetch)),
+		"lastFetch", lastFetch.Format(time.RFC3339))
+
 	return lastFetch.Format("2006-01-02 15:04:05") // Not quite RFC3339 ...
 }
 
@@ -386,4 +400,31 @@ func (mgr *fuelPricesManager) post(url, contentType string, data any) (io.ReadCl
 
 func expiresSoon(t time.Time) bool {
 	return !t.IsZero() && time.Until(t) < 5*time.Minute
+}
+
+func humanDuration(d time.Duration) string {
+	switch {
+	case d < time.Second:
+		return fmt.Sprintf("%dms", d.Milliseconds())
+	case d < time.Minute:
+		return fmt.Sprintf("%.1fs", d.Seconds())
+	case d < time.Hour:
+		mins, secs := int(d.Minutes()), int(d.Seconds())%60
+		if secs == 0 {
+			return fmt.Sprintf("%dm", mins)
+		}
+		return fmt.Sprintf("%dm%ds", mins, secs)
+	case d < 24*time.Hour:
+		hours, mins := int(d.Hours()), int(d.Minutes())%60
+		if mins == 0 {
+			return fmt.Sprintf("%dh", hours)
+		}
+		return fmt.Sprintf("%dh%dm", hours, mins)
+	default:
+		days, hours := int(d.Hours())/24, int(d.Hours())%24
+		if hours == 0 {
+			return fmt.Sprintf("%dd", days)
+		}
+		return fmt.Sprintf("%dd%dh", days, hours)
+	}
 }
