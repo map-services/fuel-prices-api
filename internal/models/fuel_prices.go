@@ -156,9 +156,9 @@ func cleansePrice(price float64) (float64, string) {
 	// The API sometimes returns prices in pounds (rather than pence) or in tenths of pence
 	// (rather than pence), so we just adjust accordingly before writing to the database.
 	if price < 10 {
-		return price * 100, fmt.Sprintf("WARNING: correcting price %0.3f -> %0.1f", price, price*100)
+		return price * 100, fmt.Sprintf("correcting price %0.3f -> %0.1f", price, price*100)
 	} else if price > 1000 {
-		return price / 10, fmt.Sprintf("WARNING: correcting price %0.1f -> %0.1f", price, price/10)
+		return price / 10, fmt.Sprintf("correcting price %0.1f -> %0.1f", price, price/10)
 	}
 	return price, ""
 }
