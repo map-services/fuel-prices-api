@@ -34,7 +34,6 @@ func bootstrap(dbPath, refresh string, debug bool) (internal.FuelPricesClient, i
 		Debug:       debug,
 		Release:     versioninfo.Revision[:7],
 		Environment: environment,
-		EnableLogs:  true,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("sentry initialization failed: %w", err)
