@@ -86,7 +86,7 @@ require (
 	github.com/Depado/ginprom v1.8.3
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/aurowora/compress v0.0.0-20230724224640-6512772d482f
-	github.com/cockroachdb/errors v1.13.0
+	github.com/cockroachdb/errors v1.14.0
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-contrib/pprof v1.5.4
 	github.com/kofalt/go-memoize v0.0.0-20240506050413-9e5eb99a0f2a
