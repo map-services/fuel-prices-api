@@ -1,6 +1,6 @@
 module github.com/map-services/fuel-prices-api
 
-go 1.26
+go 1.27
 
 require (
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
