@@ -3,15 +3,26 @@ module github.com/map-services/fuel-prices-api
 go 1.27
 
 require (
+	github.com/Depado/ginprom v1.8.3
+	github.com/PuerkitoBio/goquery v1.12.0
+	github.com/aurowora/compress v0.0.0-20230724224640-6512772d482f
+	github.com/cockroachdb/errors v1.14.0
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/getsentry/sentry-go v0.48.0
+	github.com/gin-contrib/cors v1.7.7
+	github.com/gin-contrib/pprof v1.5.4
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/joho/godotenv v1.5.1
 	github.com/json-iterator/go v1.1.12
+	github.com/kofalt/go-memoize v0.0.0-20240506050413-9e5eb99a0f2a
 	github.com/mattn/go-sqlite3 v1.14.50
 	github.com/prometheus/client_golang v1.24.1
+	github.com/rm-hull/godx v0.2.5
+	github.com/robfig/cron/v3 v3.0.1
+	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
+	github.com/tavsec/gin-healthcheck v1.7.18
 )
 
 require (
@@ -46,6 +57,8 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.12.4 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oapi-codegen/runtime v1.7.0 // indirect
@@ -78,20 +91,4 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
-)
-
-require (
-	github.com/Depado/ginprom v1.8.3
-	github.com/PuerkitoBio/goquery v1.12.0
-	github.com/aurowora/compress v0.0.0-20230724224640-6512772d482f
-	github.com/cockroachdb/errors v1.14.0
-	github.com/gin-contrib/cors v1.7.7
-	github.com/gin-contrib/pprof v1.5.4
-	github.com/kofalt/go-memoize v0.0.0-20240506050413-9e5eb99a0f2a
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/rm-hull/godx v0.2.5
-	github.com/robfig/cron/v3 v3.0.1
-	github.com/spf13/cobra v1.10.2
-	github.com/tavsec/gin-healthcheck v1.7.17
 )
