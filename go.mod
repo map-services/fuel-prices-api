@@ -18,7 +18,7 @@ require (
 	github.com/kofalt/go-memoize v0.0.0-20240506050413-9e5eb99a0f2a
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/prometheus/client_golang v1.24.1
-	github.com/rm-hull/godx v0.2.5
+	github.com/rm-hull/godx v0.2.6
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
